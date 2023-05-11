@@ -1,10 +1,23 @@
 uuid: c1fe7ad6-b9d1-4bb8-a6b8-b55bd219eff4
 langcode: en
 status: open
-dependencies: {  }
+dependencies:
+  module:
+    - webform_entity_print
+third_party_settings:
+  webform_entity_print:
+    template:
+      header: ''
+      footer: ''
+      css: ''
+    export_types:
+      pdf:
+        enabled: true
+        link_text: ''
+        link_attributes: {  }
+weight: 0
 open: null
 close: null
-weight: 0
 uid: 1
 template: false
 archive: false
@@ -12,7 +25,7 @@ id: project
 title: Project
 description: ''
 category: ''
-elements: |
+elements: |-
   project_information:
     '#type': webform_section
     '#title': 'Project Information'
@@ -47,10 +60,11 @@ elements: |
       '#template': |
         {% set rowWhr=0 %}
         {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item. load_item_hours) %}
+          {% if item.load_item_quantity|length and item.load_item_watts|length and item.load_item_hours|length %}
+            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item.load_item_hours) %}
+          {% else %}{% endif %}
         {% endfor %}
         {{rowWhr}}
-        
       '#store': true
       '#ajax': true
     load_peak_watt_draw:
@@ -59,10 +73,11 @@ elements: |
       '#template': |
         {% set rowpeakW=0 %}
         {% for item in data.stuff_to_power_configure_loads %}
+          {% if item.load_item_quantity|length and item.load_item_watts|length %}  
             {% set rowpeakW= rowpeakW + (item.load_item_quantity * item.load_item_watts) %}
+          {% else %}{% endif %}
         {% endfor %}
         {{rowpeakW}}
-        
       '#store': true
       '#ajax': true
   ac_dc:
@@ -82,10 +97,13 @@ elements: |
       '#template': |
         {% set rowWhr=0 %}
         {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item. load_item_hours) %}
+          {% if item.load_item_quantity|length and item.load_item_watts|length and item.load_item_hours|length %}
+            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item.load_item_hours) %}
+          {% else %}{% endif %}
         {% endfor %}
+        {% if rowWhr|length and data.inverter_efficiency|length %}
         {{rowWhr / data.inverter_efficiency}}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
   build_a_pv_array:
@@ -102,10 +120,10 @@ elements: |
       '#title': 'Panel Wattage'
     pv_series_panels:
       '#type': number
-      '#title': '# Series Panels'
+      '#title': 'Number Series Panels'
     pv_parallel:
       '#type': number
-      '#title': '# Parallel Strings'
+      '#title': 'Number Parallel Strings'
     pv_charge_controller_efficiency:
       '#type': number
       '#title': 'Charge controller efficiency'
@@ -114,31 +132,31 @@ elements: |
     pv_number_panels:
       '#type': webform_computed_twig
       '#title': 'Number of Panels'
-      '#template': '{{ data.pv_series_panels*data.pv_parallel }} in Total'
+      '#template': '{% if data.pv_series_panels|length and data.pv_parallel|length %}{{ data.pv_series_panels * data.pv_parallel }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     sytem_voltage:
       '#type': webform_computed_twig
       '#title': 'Sytem Voltage'
-      '#template': '{{ data.pv_panel_voltage * data.pv_series_panels }}'
+      '#template': '{% if data.pv_panel_voltage|length and data.pv_series_panels|length %}{{ data.pv_panel_voltage * data.pv_series_panels }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     system_wh_produced_per_hour:
       '#type': webform_computed_twig
       '#title': 'System WH produced per hour of sun'
-      '#template': '{{ data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel }}'
+      '#template': '{% if data.pv_panel_wattage|length and data.pv_series_panels|length and data.pv_parallel|length %}{{ data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     system_watts_total_produced_per_day:
       '#type': webform_computed_twig
       '#title': 'System Watts total produced (low season per day)'
-      '#template': '{{ data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel * data.sun_hours }}'
+      '#template': '{% if data.pv_panel_wattage|length and data.pv_series_panels|length and data.pv_parallel|length and data.sun_hours|length %}{{ data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel * data.sun_hours }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     pv_generated_after_efficiency:
       '#type': webform_computed_twig
       '#title': 'PV System Generation per day (with efficiency factored)'
-      '#template': '{{ data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel * data.sun_hours * data.pv_charge_controller_efficiency }}'
+      '#template': '{% if data.pv_panel_wattage|length and data.pv_series_panels|length and data.pv_parallel|length and data.sun_hours|length and data.pv_charge_controller_efficiency|length %}{{ data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel * data.sun_hours * data.pv_charge_controller_efficiency }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     pv_generation_check:
@@ -147,10 +165,13 @@ elements: |
       '#template': |
         {% set rowWhr=0 %}
         {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item. load_item_hours) %}
+          {% if item.load_item_quantity|length and item.load_item_watts|length and item.load_item_hours|length %}
+            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item.load_item_hours) %}
+          {% else %}{% endif %}
         {% endfor %}
+        {% if data.pv_panel_wattage|length and data.pv_series_panels|length and data.pv_parallel|length and data.sun_hours|length and data.pv_charge_controller_efficiency|length and rowWhr|length and data.inverter_efficiency|length %}
         {{ (data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel * data.sun_hours * data.pv_charge_controller_efficiency) / (rowWhr / data.inverter_efficiency) }}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
   build_a_battery_bank:
@@ -164,20 +185,20 @@ elements: |
       '#title': 'Battery AH'
     battery_series:
       '#type': number
-      '#title': '# of Series Batteries'
+      '#title': 'Number of Series Batteries'
     battery_parallel:
       '#type': number
-      '#title': '# of Parallel battery strings'
+      '#title': 'Number of Parallel battery strings'
     battery_number:
       '#type': webform_computed_twig
-      '#title': '# of Batteries in Total'
-      '#template': '{{ data.battery_series * data.battery_parallel }}'
+      '#title': 'Number of Batteries in Total'
+      '#template': '{% if data.battery_series|length and data.battery_parallel|length %}{{ data.battery_series * data.battery_parallel }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     battery_system_ah_before_discharge_limit_set:
       '#type': webform_computed_twig
       '#title': 'System Ah before discharge limit set'
-      '#template': '{{ data.battery_ah * data.battery_parallel }}'
+      '#template': '{% if data.battery_ah|length and data.battery_parallel|length %}{{ data.battery_ah * data.battery_parallel }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     battery_discharge_to:
@@ -186,13 +207,13 @@ elements: |
     battery_system_availible_ah:
       '#type': webform_computed_twig
       '#title': 'System availible AH'
-      '#template': '{{ data.battery_ah * data.battery_parallel * (1-data.battery_discharge_to) }}'
+      '#template': '{% if data.battery_ah|length and data.battery_parallel|length and data.battery_discharge_to|length %}{{ data.battery_ah * data.battery_parallel * (1-data.battery_discharge_to) }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     battery_system_voltage:
       '#type': webform_computed_twig
       '#title': 'System Voltage'
-      '#template': '{{ data.battery_voltage * data.battery_series }}'
+      '#template': '{% if data.battery_voltage|length and data.battery_series|length %}{{ data.battery_voltage * data.battery_series }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     amp_hours_consumed_per_day:
@@ -201,11 +222,13 @@ elements: |
       '#template': |
         {% set rowWhr=0 %}
         {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item. load_item_hours) %}
+          {% if item.load_item_quantity|length and item.load_item_watts|length and item.load_item_hours|length %}
+            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item.load_item_hours) %}
+          {% else %}{% endif %}
         {% endfor %}
-        
+        {% if rowWhr|length and data.inverter_efficiency|length and data.battery_voltage|length and data.battery_series|length %}
         {{ (rowWhr / data.inverter_efficiency) / (data.battery_voltage * data.battery_series) }}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
     battery_number_of_cloudy_days:
@@ -217,11 +240,13 @@ elements: |
       '#template': |
         {% set rowWhr=0 %}
         {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item. load_item_hours) %}
+          {% if item.load_item_quantity|length and item.load_item_watts|length and item.load_item_hours|length %}
+            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item.load_item_hours) %}
+          {% else %}{% endif %}
         {% endfor %}
-        
+        {% if rowWhr|length and data.inverter_efficiency|length and data.battery_voltage|length and data.battery_series|length and data.battery_number_of_cloudy_days|length %}
         {{ ((rowWhr / data.inverter_efficiency) / (data.battery_voltage * data.battery_series)) * data.battery_number_of_cloudy_days }}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
     battery_capacity_check:
@@ -230,11 +255,13 @@ elements: |
       '#template': |
         {% set rowWhr=0 %}
         {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item. load_item_hours) %}
+          {% if item.load_item_quantity|length and item.load_item_watts|length and item.load_item_hours|length %}
+            {% set rowWhr= rowWhr + (item.load_item_quantity * item.load_item_watts * item.load_item_hours) %}
+          {% else %}{% endif %}
         {% endfor %}
-        
+        {% if data.battery_ah|length and data.battery_parallel|length and data.battery_discharge_to|length and rowWhr|length and data.inverter_efficiency|length and data.battery_voltage|length and data.battery_series|length and data.battery_number_of_cloudy_days|length %}
         {{ (data.battery_ah * data.battery_parallel * (1-data.battery_discharge_to)) / (((rowWhr / data.inverter_efficiency) / (data.battery_voltage * data.battery_series)) * data.battery_number_of_cloudy_days) }}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
   specifications_for_wire_breaker_sizing:
@@ -243,25 +270,31 @@ elements: |
     spec_system_charging_voltage:
       '#type': webform_computed_twig
       '#title': 'PV System Voltage (PV combiner -> Charge Controller)'
-      '#template': '{{ data.pv_panel_voltage * data.pv_series_panels }}'
+      '#template': '{% if data.pv_panel_voltage|length and data.pv_series_panels|length %}{{ data.pv_panel_voltage * data.pv_series_panels }}{% else %}0{% endif %}'
+      '#store': true
+      '#ajax': true
     spec_system_charging_amps:
       '#type': webform_computed_twig
       '#title': 'PV Amps (PV combiner -> Charge Controller)'
       '#template': |
+        {% if data.pv_panel_wattage|length and data.pv_series_panels|length and data.pv_parallel|length and data.pv_panel_voltage|length %}
         {{ (data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel) / (data.pv_panel_voltage * data.pv_series_panels) }}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
     spec_charge_voltage_controller_battery_bank_:
       '#type': webform_computed_twig
       '#title': 'Charge Voltage (Controller -> Battery Bank)'
-      '#template': '{{ data.battery_voltage * data.battery_series }}'
+      '#template': '{% if data.battery_voltage|length and data.battery_series|length %}{{ data.battery_voltage * data.battery_series }}{% else %}0{% endif %}'
       '#store': true
       '#ajax': true
     spec_charging_amps_controller_battery:
       '#type': webform_computed_twig
       '#title': 'Charging Amps (Controller -> Battery)'
-      '#template': '{{ (data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel) / (data.battery_voltage * data.battery_series) }}'
+      '#template': |
+        {% if data.pv_panel_wattage|length and data.pv_series_panels|length and data.pv_parallel|length and data.battery_voltage|length and data.battery_series|length %}
+        {{ (data.pv_panel_wattage * data.pv_series_panels * data.pv_parallel) / (data.battery_voltage * data.battery_series) }}
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
     load_amps_battery_inverter_load_:
@@ -269,11 +302,14 @@ elements: |
       '#title': 'Load Amps (Battery -> Inverter / Load)'
       '#template': |
         {% set rowpeakW=0 %}
-        {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowpeakW= rowpeakW + (item.load_item_quantity * item.load_item_watts) %}
-        {% endfor %}
+          {% for item in data.stuff_to_power_configure_loads %}
+            {% if item.load_item_quantity|length and item.load_item_watts|length %}  
+              {% set rowpeakW= rowpeakW + (item.load_item_quantity * item.load_item_watts) %}
+            {% else %}{% endif %}
+          {% endfor %}
+        {% if rowpeakW|length and data.battery_voltage|length and data.battery_series|length %}
         {{rowpeakW / (data.battery_voltage * data.battery_series) }}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
     load_amps_inverter_load:
@@ -281,11 +317,14 @@ elements: |
       '#title': 'Load Amps (Inverter -> Load)'
       '#template': |
         {% set rowpeakW=0 %}
-        {% for item in data.stuff_to_power_configure_loads %}
-            {% set rowpeakW= rowpeakW + (item.load_item_quantity * item.load_item_watts) %}
-        {% endfor %}
+          {% for item in data.stuff_to_power_configure_loads %}
+            {% if item.load_item_quantity|length and item.load_item_watts|length %}  
+              {% set rowpeakW= rowpeakW + (item.load_item_quantity * item.load_item_watts) %}
+            {% else %}{% endif %}
+          {% endfor %}
+        {% if rowpeakW|length and data.load_voltage|length %}
         {{rowpeakW / data.load_voltage }}
-        
+        {% else %}0{% endif %}
       '#store': true
       '#ajax': true
     system_diagram:
@@ -293,7 +332,6 @@ elements: |
       '#display_on': both
       '#text': |
         <p><img alt="System Diagram" data-entity-type="file" data-entity-uuid="633a7bea-f31f-4e7b-8222-cdfc6ef8ab65" src="/sites/default/files/inline-images/Untitled%20Diagram.png" /></p>
-        
       '#format': basic_html
   terms_of_use_license:
     '#type': webform_section
@@ -305,7 +343,6 @@ elements: |
         The author (Roland Wells) of this tool makes no warranty, representation, or guarantee regarding the information contained herein or the suitability of information as applied to a particular purpose, system or use. The author assumes no liability whatsoever arising out of the application or use of this information in any situation or application. In plain english, if you use this information to build something, YOU are responsible for it, not me.<br />
         <br />
         This document is specifically NOT copyright anybody, you are free to share, change, and use as you wish. If you do build something based on this document, I&#39;d love to hear about it, if you do share this document or a derivative, I&#39;d appreciate appropriate credit (however this is not required by this license). In plain english, you can do whatever you&#39;d like with this document and the information contained in it. Email the author, rw@ubsquad.com, with any comments, suggestions, edits, upgrades, complaints, etc.
-        
   actions:
     '#type': webform_actions
     '#title': 'Submit button(s)'
@@ -313,7 +350,7 @@ elements: |
 css: ''
 javascript: ''
 settings:
-  ajax: false
+  ajax: true
   ajax_scroll_top: form
   ajax_progress_type: ''
   ajax_effect: ''
@@ -324,44 +361,52 @@ settings:
   page_theme_name: ''
   form_title: webform
   form_submit_once: false
-  form_exception_message: ''
   form_open_message: ''
   form_close_message: ''
+  form_exception_message: ''
   form_previous_submissions: true
   form_confidential: false
   form_confidential_message: ''
-  form_remote_addr: true
+  form_disable_remote_addr: false
   form_convert_anonymous: false
   form_prepopulate: false
   form_prepopulate_source_entity: false
   form_prepopulate_source_entity_required: false
   form_prepopulate_source_entity_type: ''
-  form_reset: false
+  form_unsaved: false
+  form_disable_back: false
+  form_submit_back: false
   form_disable_autocomplete: false
   form_novalidate: false
   form_disable_inline_errors: false
   form_required: false
-  form_unsaved: false
-  form_disable_back: false
-  form_submit_back: false
   form_autofocus: false
   form_details_toggle: false
+  form_reset: false
   form_access_denied: default
   form_access_denied_title: ''
   form_access_denied_message: ''
   form_access_denied_attributes: {  }
   form_file_limit: ''
+  form_attributes: {  }
+  form_method: ''
+  form_action: ''
   share: false
   share_node: false
   share_theme_name: ''
   share_title: true
   share_page_body_attributes: {  }
   submission_label: ''
+  submission_exception_message: ''
+  submission_locked_message: ''
   submission_log: false
+  submission_excluded_elements: {  }
+  submission_exclude_empty: false
+  submission_exclude_empty_checkbox: false
   submission_views:
     admin:
-      view: 'webform_submissions:embed_administer'
       title: 'PV Spec Builder Projects'
+      view: 'webform_submissions:embed_administer'
       webform_routes:
         - entity.webform.results_submissions
       node_routes: {  }
@@ -376,11 +421,6 @@ settings:
   submission_access_denied_title: ''
   submission_access_denied_message: ''
   submission_access_denied_attributes: {  }
-  submission_exception_message: ''
-  submission_locked_message: ''
-  submission_excluded_elements: {  }
-  submission_exclude_empty: false
-  submission_exclude_empty_checkbox: false
   previous_submission_message: ''
   previous_submissions_message: ''
   autofill: false
@@ -391,17 +431,21 @@ settings:
   wizard_progress_percentage: false
   wizard_progress_link: false
   wizard_progress_states: false
-  wizard_auto_forward: true
   wizard_start_label: ''
   wizard_preview_link: false
   wizard_confirmation: true
   wizard_confirmation_label: ''
+  wizard_auto_forward: true
+  wizard_auto_forward_hide_next_button: false
+  wizard_keyboard: true
   wizard_track: ''
   wizard_prev_button_label: ''
   wizard_next_button_label: ''
   wizard_toggle: true
   wizard_toggle_show_label: ''
   wizard_toggle_hide_label: ''
+  wizard_page_type: container
+  wizard_page_title_tag: h2
   preview: 0
   preview_label: ''
   preview_title: ''
@@ -418,9 +462,9 @@ settings:
   draft_pending_single_message: ''
   draft_pending_multiple_message: ''
   confirmation_type: page
+  confirmation_url: ''
   confirmation_title: ''
   confirmation_message: ''
-  confirmation_url: ''
   confirmation_attributes: {  }
   confirmation_back: true
   confirmation_back_label: ''
@@ -447,6 +491,8 @@ settings:
   results_customize: false
   token_view: false
   token_update: false
+  token_delete: false
+  serial_disabled: false
 access:
   create:
     roles:
